@@ -8,7 +8,7 @@
 #include "fbgemm/FbgemmI8DepthwiseAvx2.h"
 
 #include <immintrin.h>
-#include <memory>
+#include <malloc.h>
 
 #include "./MaskAvx2.h"
 #include "fbgemm/UtilsAvx2.h"

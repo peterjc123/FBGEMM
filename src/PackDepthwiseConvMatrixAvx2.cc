@@ -89,8 +89,13 @@ PackedDepthWiseConvMatrix::PackedDepthWiseConvMatrix(
   // (12, 8), (12, 9), (12, 10), zero, ..., (15, 8), (15, 9), (15, 10), zero
   // (28, 8), (28, 9), (28, 10), zero, ..., (31, 8), (31, 9), (31, 10), zero
   for (int k1 = 0; k1 < K; k1 += 32) {
-    std::unique_ptr<__m256i[]> b_v_ptr(new __m256i[kernel_prod]);
-    auto b_v = b_v_ptr.get();
+    #ifdef _MSC_VER
+    // MSVC doesn't support VLAs.
+    // It is important to release them with `_aligned_free`.
+    auto b_v = static_cast<__m256i>(_aligned_malloc(sizeof(__m256i) * kernel_prod, sizeof(__m256i)));
+    #else
+    __m256i b_v[kernel_prod];
+    #endif
     int remainder = K - k1;
     if (remainder < 32) {
       __m256i mask_v = _mm256_load_si256(reinterpret_cast<const __m256i*>(
@@ -107,8 +112,13 @@ PackedDepthWiseConvMatrix::PackedDepthWiseConvMatrix(
     }
 
     // Interleave 2 SIMD registers
-    std::unique_ptr<__m256i[]> b_interleaved_epi16_ptr(new __m256i[kernel_prod_aligned]);
-    auto b_interleaved_epi16 = b_interleaved_epi16_ptr.get();
+    #ifdef _MSC_VER
+    // MSVC doesn't support VLAs.
+    // It is important to release them with `_aligned_free`.
+    auto b_interleaved_epi16 = static_cast<__m256i>(_aligned_malloc(sizeof(__m256i) * kernel_prod_aligned, sizeof(__m256i)));
+    #else
+    __m256i b_interleaved_epi16[kernel_prod_aligned];
+    #endif
     __m256i zero_v = _mm256_setzero_si256();
     for (int i = 0; i < kernel_prod_aligned / 2; ++i) {
       if (2 * i + 1 >= kernel_prod) {
@@ -124,8 +134,13 @@ PackedDepthWiseConvMatrix::PackedDepthWiseConvMatrix(
     }
 
     // Interleave 4 SIMD registers
-    std::unique_ptr<__m256i[]> b_interleaved_epi32_ptr(new __m256i[kernel_prod_aligned]);
-    auto b_interleaved_epi32 = b_interleaved_epi32_ptr.get();
+    #ifdef _MSC_VER
+    // MSVC doesn't support VLAs.
+    // It is important to release them with `_aligned_free`.
+    auto b_interleaved_epi32 = static_cast<__m256i>(_aligned_malloc(sizeof(__m256i) * kernel_prod_aligned, sizeof(__m256i)));
+    #else
+    __m256i b_interleaved_epi32[kernel_prod_aligned];
+    #endif
     for (int i = 0; i < kernel_prod_aligned / 4; ++i) {
       b_interleaved_epi32[4 * i] = _mm256_unpacklo_epi16(
           b_interleaved_epi16[4 * i], b_interleaved_epi16[4 * i + 2]);
@@ -148,6 +163,12 @@ PackedDepthWiseConvMatrix::PackedDepthWiseConvMatrix(
     }
   }
   fbgemmAlignedFree(smat_transposed);
+  #ifdef _MSC_VER
+  // Release the allocations on the heap
+  _aligned_free(b_v);
+  _aligned_free(b_interleaved_epi16);
+  _aligned_free(b_interleaved_epi32);
+  #endif
 }
 
 int PackedDepthWiseConvMatrix::addr(int r, int c) {

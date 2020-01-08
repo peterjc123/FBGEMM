@@ -8,6 +8,7 @@
 #include "fbgemm/FbgemmI8DepthwiseAvx2.h"
 
 #include <string>
+#include <stdexcept>
 
 #include "./FbgemmI8Depthwise2DAvx2-inl.h"
 

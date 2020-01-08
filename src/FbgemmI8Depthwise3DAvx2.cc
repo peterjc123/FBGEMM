@@ -9,6 +9,7 @@
 
 #include <string>
 #include <tuple> // for tie
+#include <stdexcept>
 
 #include "./FbgemmI8DepthwiseAvx2-inl.h"
 #include "./MaskAvx2.h"

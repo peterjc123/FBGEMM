@@ -149,7 +149,7 @@ if(MSVC AND FBGEMM_LIBRARY_TYPE STREQUAL "shared")
   target_compile_options(fbgemm_generic PRIVATE "-DFBGEMM_EXPORTS")
   target_compile_options(fbgemm_avx2 PRIVATE "-DFBGEMM_EXPORTS")
   target_compile_options(fbgemm_avx512 PRIVATE "-DFBGEMM_EXPORTS")
-endif(MSVC)
+endif()
 
 set_target_properties(fbgemm_generic fbgemm_avx2 fbgemm_avx512 PROPERTIES
       CXX_STANDARD 11

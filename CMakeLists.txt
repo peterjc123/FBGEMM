@@ -145,6 +145,12 @@ add_library(fbgemm_generic OBJECT ${FBGEMM_GENERIC_SRCS})
 add_library(fbgemm_avx2 OBJECT ${FBGEMM_AVX2_SRCS})
 add_library(fbgemm_avx512 OBJECT ${FBGEMM_AVX512_SRCS})
 
+if(MSVC AND FBGEMM_LIBRARY_TYPE STREQUAL "shared")
+  target_compile_options(fbgemm_generic PRIVATE "-DFBGEMM_EXPORTS")
+  target_compile_options(fbgemm_avx2 PRIVATE "-DFBGEMM_EXPORTS")
+  target_compile_options(fbgemm_avx512 PRIVATE "-DFBGEMM_EXPORTS")
+endif(MSVC)
+
 set_target_properties(fbgemm_generic fbgemm_avx2 fbgemm_avx512 PROPERTIES
       CXX_STANDARD 11
       CXX_STANDARD_REQUIRED YES
@@ -170,7 +176,11 @@ if(NOT TARGET asmjit)
   endif()
 
   #build asmjit
-  set(ASMJIT_STATIC ON)
+  if(MSVC AND FBGEMM_LIBRARY_TYPE STREQUAL "shared")
+    set(ASMJIT_STATIC OFF)
+  else()
+    set(ASMJIT_STATIC ON)
+  endif()
   add_subdirectory("${ASMJIT_SRC_DIR}" "${FBGEMM_BINARY_DIR}/asmjit")
   set_property(TARGET asmjit PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
